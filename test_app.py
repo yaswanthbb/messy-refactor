@@ -1,17 +1,19 @@
 import pytest
-from app import create_app
-from app.db import get_db_connection
+import app as main_app
+import sqlite3
 
 @pytest.fixture
 def client():
-    app = create_app()
-    app.config['TESTING'] = True
-    client = app.test_client()
+    main_app.app.config['TESTING'] = True
+    client = main_app.app.test_client()
 
-    # Setup: create clean test DB
-    conn = get_db_connection()
+    # Setup clean DB
+    conn = sqlite3.connect('users.db')
     conn.execute("DELETE FROM users")
-    conn.execute("INSERT INTO users (name, email, password) VALUES (?, ?, ?)", ("Test User", "test@example.com", "hashed"))
+    conn.execute(
+        "INSERT INTO users (name, email, password) VALUES (?, ?, ?)",
+        ("Test User", "test@example.com", main_app.generate_password_hash("testpass"))
+    )
     conn.commit()
     conn.close()
 
